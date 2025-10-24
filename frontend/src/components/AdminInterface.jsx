@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getCourseOptions, getAcademicYearOptions } from '../services/dataService';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-const AdminInterface = () => {
+const AdminInterface = ({ onStudentCreated }) => {
   const [students, setStudents] = useState([]);
   const [feePlans, setFeePlans] = useState([]);
   const [studentFees, setStudentFees] = useState([]);
@@ -11,6 +12,60 @@ const AdminInterface = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Student creation form
+  const [newStudent, setNewStudent] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    course: '',
+    academicYear: ''
+  });
+
+  // Course options from centralized service
+  const courseOptions = getCourseOptions();
+
+  // State for custom course input
+  const [showCustomCourse, setShowCustomCourse] = useState(false);
+  const [customCourse, setCustomCourse] = useState('');
+
+  // Course duration mapping
+  const getCourseDuration = (course) => {
+    const durationMap = {
+      'Computer Science Engineering': '4 years',
+      'Information Technology': '4 years',
+      'Electronics and Communication Engineering': '4 years',
+      'Mechanical Engineering': '4 years',
+      'Civil Engineering': '4 years',
+      'Electrical Engineering': '4 years',
+      'Chemical Engineering': '4 years',
+      'Aerospace Engineering': '4 years',
+      'Biotechnology': '4 years',
+      'Business Administration': '3 years',
+      'Commerce': '3 years',
+      'Finance': '3 years',
+      'Marketing': '3 years',
+      'Human Resources': '3 years',
+      'Arts': '3 years',
+      'Literature': '3 years',
+      'History': '3 years',
+      'Philosophy': '3 years',
+      'Psychology': '3 years',
+      'Science': '3 years',
+      'Physics': '3 years',
+      'Chemistry': '3 years',
+      'Mathematics': '3 years',
+      'Biology': '3 years',
+      'Medicine': '5 years',
+      'Law': '3 years',
+      'Architecture': '5 years',
+      'Design': '4 years'
+    };
+    return durationMap[course] || '3 years';
+  };
+
+  // Academic year options from centralized service
+  const academicYearOptions = getAcademicYearOptions();
 
   // Form states
   const [newFeePlan, setNewFeePlan] = useState({
@@ -176,6 +231,24 @@ const AdminInterface = () => {
     }
   };
 
+  const handleAddStudent = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await axios.post(`${API_BASE_URL}/students`, newStudent);
+      setSuccess('Student added successfully!');
+      setNewStudent({ firstName: '', lastName: '', email: '', course: '', academicYear: '' });
+      fetchStudents();
+      if (onStudentCreated) {
+        onStudentCreated();
+      }
+    } catch (err) {
+      setError('Failed to add student: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -199,30 +272,166 @@ const AdminInterface = () => {
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
 
-      <div className="grid grid-2">
+      <div className="grid grid-3">
+        {/* Add Student */}
+        <div className="card">
+          <h2 className="card-title">Add New Student</h2>
+          <form onSubmit={handleAddStudent}>
+            <div className="form-group">
+              <label className="form-label">First Name</label>
+              <input
+                type="text"
+                className="form-input"
+                value={newStudent.firstName}
+                onChange={(e) => setNewStudent({...newStudent, firstName: e.target.value})}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Last Name</label>
+              <input
+                type="text"
+                className="form-input"
+                value={newStudent.lastName}
+                onChange={(e) => setNewStudent({...newStudent, lastName: e.target.value})}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                className="form-input"
+                value={newStudent.email}
+                onChange={(e) => setNewStudent({...newStudent, email: e.target.value})}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Course</label>
+              <select
+                className="form-select"
+                value={newStudent.course}
+                onChange={(e) => {
+                  if (e.target.value === 'Other') {
+                    setShowCustomCourse(true);
+                    setNewStudent({...newStudent, course: ''});
+                  } else {
+                    setShowCustomCourse(false);
+                    setNewStudent({...newStudent, course: e.target.value});
+                  }
+                }}
+                required
+              >
+                <option value="">Select Course</option>
+                {courseOptions.map(course => (
+                  <option key={course} value={course}>
+                    {course}
+                  </option>
+                ))}
+              </select>
+              {showCustomCourse && (
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Enter custom course name"
+                  value={customCourse}
+                  onChange={(e) => {
+                    setCustomCourse(e.target.value);
+                    setNewStudent({...newStudent, course: e.target.value});
+                  }}
+                  style={{marginTop: '10px'}}
+                />
+              )}
+              {newStudent.course && !showCustomCourse && (
+                <div className="course-info">
+                  <strong>Duration:</strong> {getCourseDuration(newStudent.course)}
+                </div>
+              )}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Academic Year</label>
+              <select
+                className="form-select"
+                value={newStudent.academicYear}
+                onChange={(e) => setNewStudent({...newStudent, academicYear: e.target.value})}
+                required
+              >
+                <option value="">Select Academic Year</option>
+                {academicYearOptions.map(year => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Adding...' : 'Add Student'}
+            </button>
+          </form>
+        </div>
+
         {/* Create Fee Plan */}
         <div className="card">
           <h2 className="card-title">Create Fee Plan</h2>
           <form onSubmit={handleCreateFeePlan}>
             <div className="form-group">
               <label className="form-label">Course</label>
-              <input
-                type="text"
-                className="form-input"
+              <select
+                className="form-select"
                 value={newFeePlan.course}
-                onChange={(e) => setNewFeePlan({...newFeePlan, course: e.target.value})}
+                onChange={(e) => {
+                  if (e.target.value === 'Other') {
+                    setShowCustomCourse(true);
+                    setNewFeePlan({...newFeePlan, course: ''});
+                  } else {
+                    setShowCustomCourse(false);
+                    setNewFeePlan({...newFeePlan, course: e.target.value});
+                  }
+                }}
                 required
-              />
+              >
+                <option value="">Select Course</option>
+                {courseOptions.map(course => (
+                  <option key={course} value={course}>
+                    {course}
+                  </option>
+                ))}
+              </select>
+              {showCustomCourse && (
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Enter custom course name"
+                  value={customCourse}
+                  onChange={(e) => {
+                    setCustomCourse(e.target.value);
+                    setNewFeePlan({...newFeePlan, course: e.target.value});
+                  }}
+                  style={{marginTop: '10px'}}
+                />
+              )}
+              {newFeePlan.course && !showCustomCourse && (
+                <div className="course-info">
+                  <strong>Duration:</strong> {getCourseDuration(newFeePlan.course)}
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">Academic Year</label>
-              <input
-                type="text"
-                className="form-input"
+              <select
+                className="form-select"
                 value={newFeePlan.academicYear}
                 onChange={(e) => setNewFeePlan({...newFeePlan, academicYear: e.target.value})}
                 required
-              />
+              >
+                <option value="">Select Academic Year</option>
+                {academicYearOptions.map(year => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label className="form-label">Tuition Fee</label>
