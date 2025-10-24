@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/student-fees")
+@CrossOrigin(origins = "http://localhost:5173")
 public class StudentFeeController {
 
     private final StudentFeeService studentFeeService;
@@ -19,7 +20,6 @@ public class StudentFeeController {
         this.studentFeeService = studentFeeService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/assign")
     public StudentFee assign(@RequestParam String studentId,
                              @RequestParam String feePlanId,
@@ -27,26 +27,21 @@ public class StudentFeeController {
         return studentFeeService.assign(studentId, feePlanId, dueDate);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<StudentFee> listAll() {
         return studentFeeService.listAll();
     }
 
-    @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/me")
-    public List<StudentFee> myFees(Principal principal) {
-        String studentId = principal.getName();
+    public List<StudentFee> myFees(@RequestParam String studentId) {
         return studentFeeService.listMine(studentId);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/due-date")
     public StudentFee updateDueDate(@PathVariable String id, @RequestParam Instant dueDate) {
         return studentFeeService.updateDueDate(id, dueDate);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteIfNoPayments(@PathVariable String id) {
         studentFeeService.deleteIfNoPayments(id);
