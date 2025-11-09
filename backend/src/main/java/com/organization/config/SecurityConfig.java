@@ -1,5 +1,9 @@
 package com.organization.config;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,9 +26,12 @@ import com.organization.security.JwtAuthenticationFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	private JwtAuthenticationEntryPoint authenticationEntryPoint;
+	private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
-	private JwtAuthenticationFilter authenticationFilter;
+	private final JwtAuthenticationFilter authenticationFilter;
+
+	@Value("${cors.allowed.origins:http://localhost:5173}")
+	private String corsAllowedOrigins;
 
 	public SecurityConfig(JwtAuthenticationEntryPoint authenticationEntryPoint,
 			JwtAuthenticationFilter authenticationFilter) {
@@ -45,7 +52,11 @@ public class SecurityConfig {
 	@Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:5173");
+        configuration.setAllowedOrigins(
+        		Arrays.stream(corsAllowedOrigins.split(","))
+        				.map(String::trim)
+        				.filter(origin -> !origin.isEmpty())
+        				.collect(Collectors.toList()));
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);

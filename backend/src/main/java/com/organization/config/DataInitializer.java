@@ -27,9 +27,9 @@ public class DataInitializer {
 
                 userRepository.save(admin);
 
-                System.out.println("✅ Admin user created: " + adminEmail + " / Admin@123");
+                System.out.println("Admin user created: " + adminEmail + " / Admin@123");
             } else {
-                System.out.println("ℹ️ Admin user already exists: " + adminEmail);
+                System.out.println("Admin user already exists: " + adminEmail);
             }
         };
     }

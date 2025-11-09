@@ -1,9 +1,18 @@
 package com.organization.entity;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import jakarta.validation.constraints.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "students")
 public class Student {
@@ -27,25 +36,45 @@ public class Student {
     @Size(max = 100, message = "Email must not exceed 100 characters")
     private String email;
 
+    /**
+     * Legacy primary course field; populated from the primary course enrollment for backward compatibility.
+     */
     @Indexed
-    @NotBlank(message = "Course is required")
-    @Size(max = 100, message = "Course must not exceed 100 characters")
     private String course;
 
-    @Indexed
-    @NotBlank(message = "Academic year is required")
-    @Pattern(regexp = "\\d{4}-\\d{4}", message = "Academic year must be in format YYYY-YYYY")
+    /**
+     * Legacy academic year derived from the primary course enrollment.
+     */
     private String academicYear;
+
+    @NotBlank(message = "Degree type is required")
+    private String degreeType;
+
+    @Min(value = 1, message = "Degree duration must be at least 1 year")
+    @Max(value = 10, message = "Degree duration must not exceed 10 years")
+    private Integer degreeDurationYears;
+
+    @Valid
+    private List<CourseEnrollment> courses = new ArrayList<>();
 
     public Student() {}
 
-    public Student(String id, String firstName, String lastName, String email, String course, String academicYear) {
+    public Student(String id,
+                   String firstName,
+                   String lastName,
+                   String email,
+                   String degreeType,
+                   Integer degreeDurationYears,
+                   List<CourseEnrollment> courses) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.course = course;
-        this.academicYear = academicYear;
+        this.degreeType = degreeType;
+        this.degreeDurationYears = degreeDurationYears;
+        if (courses != null) {
+            this.courses = courses;
+        }
     }
 
     public String getId() {
@@ -96,6 +125,49 @@ public class Student {
         this.academicYear = academicYear;
     }
 
+    public String getDegreeType() {
+        return degreeType;
+    }
+
+    public void setDegreeType(String degreeType) {
+        this.degreeType = degreeType;
+    }
+
+    public Integer getDegreeDurationYears() {
+        return degreeDurationYears;
+    }
+
+    public void setDegreeDurationYears(Integer degreeDurationYears) {
+        this.degreeDurationYears = degreeDurationYears;
+    }
+
+    public List<CourseEnrollment> getCourses() {
+        return courses;
+    }
+
+    public void setCourses(List<CourseEnrollment> courses) {
+        this.courses = courses;
+    }
+
+    public List<CourseEnrollment> getEffectiveCourses() {
+        if (courses != null && !courses.isEmpty()) {
+            return courses;
+        }
+        List<CourseEnrollment> legacyCourses = new ArrayList<>();
+        if (course != null && academicYear != null) {
+            String[] parts = academicYear.split("-");
+            if (parts.length == 2) {
+                try {
+                    int start = Integer.parseInt(parts[0]);
+                    int end = Integer.parseInt(parts[1]);
+                    legacyCourses.add(new CourseEnrollment(course, start, end, true));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return legacyCourses;
+    }
+
     @Override
     public String toString() {
         return "Student{" +
@@ -103,8 +175,73 @@ public class Student {
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
-                ", course='" + course + '\'' +
-                ", academicYear='" + academicYear + '\'' +
+                ", degreeType='" + degreeType + '\'' +
+                ", degreeDurationYears=" + degreeDurationYears +
+                ", courses=" + courses +
                 '}';
+    }
+
+    public static class CourseEnrollment {
+        @NotBlank(message = "Course name is required")
+        @Size(max = 100, message = "Course name must not exceed 100 characters")
+        private String courseName;
+
+        @Min(value = 1900, message = "Start year must be after 1900")
+        @Max(value = 3000, message = "Start year must be before 3000")
+        @NotNull(message = "Start year is required")
+        private Integer startYear;
+
+        @Min(value = 1900, message = "End year must be after 1900")
+        @Max(value = 3000, message = "End year must be before 3000")
+        @NotNull(message = "End year is required")
+        private Integer endYear;
+
+        private boolean primary;
+
+        public CourseEnrollment() {}
+
+        public CourseEnrollment(String courseName, Integer startYear, Integer endYear, boolean primary) {
+            this.courseName = courseName;
+            this.startYear = startYear;
+            this.endYear = endYear;
+            this.primary = primary;
+        }
+
+        public String getCourseName() {
+            return courseName;
+        }
+
+        public void setCourseName(String courseName) {
+            this.courseName = courseName;
+        }
+
+        public Integer getStartYear() {
+            return startYear;
+        }
+
+        public void setStartYear(Integer startYear) {
+            this.startYear = startYear;
+        }
+
+        public Integer getEndYear() {
+            return endYear;
+        }
+
+        public void setEndYear(Integer endYear) {
+            this.endYear = endYear;
+        }
+
+        public boolean isPrimary() {
+            return primary;
+        }
+
+        public void setPrimary(boolean primary) {
+            this.primary = primary;
+        }
+
+        @Override
+        public String toString() {
+            return courseName + " (" + startYear + "-" + endYear + ")";
+        }
     }
 }

@@ -7,6 +7,7 @@ C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\exception\GlobalExceptionHandler.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\exception\StudentErrorResponse.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\controller\StudentController.java
+C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\dto\AppInfoResponse.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\service\AuthServiceImpl.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\entity\FeePlan.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\exception\StudentApiException.java
@@ -25,6 +26,7 @@ C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\exception\NoStudentRecordFoundException.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\repository\StudentFeeRepository.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\service\FeePlanService.java
+C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\controller\AppInfoController.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\Application.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\dto\RegisterDto.java
 C:\Users\varis\Downloads\fee-management-system\fee-management-system\backend\src\main\java\com\organization\entity\Student.java

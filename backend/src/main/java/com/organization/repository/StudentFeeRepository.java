@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface StudentFeeRepository extends MongoRepository<StudentFee, String> {
     List<StudentFee> findByStudentId(String studentId);
-    boolean existsByFeePlanId(String feePlanId);
+    boolean existsByStudentIdAndFeePlanIdAndAcademicYear(String studentId, String feePlanId, String academicYear);
 }

@@ -12,7 +12,6 @@ import com.organization.service.StudentService;
 
 @RestController
 @RequestMapping("/api/students")
-@CrossOrigin(origins = {"http://localhost:5173"})
 public class StudentController {
 
 	private final StudentService studentService;
