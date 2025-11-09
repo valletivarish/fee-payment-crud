@@ -14,7 +14,7 @@ export function formatCurrency(amount) {
       maximumFractionDigits: 2
     }).format(amount)
   }
-  return '€0.00'
+  return 'EUR 0.00'
 }
 
 export function formatDate(date) {
@@ -43,11 +43,11 @@ export function getStatusColor(status) {
 export function getStatusIcon(status) {
   switch (status) {
     case 'PAID':
-      return '✓'
+      return 'OK'
     case 'PARTIAL':
-      return '⚠'
+      return 'WARN'
     case 'PENDING':
-      return '⏳'
+      return 'WAIT'
     default:
       return '?'
   }

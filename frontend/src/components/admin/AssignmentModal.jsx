@@ -5,14 +5,22 @@ import { formatCurrency, formatDate } from '../../lib/utils'
 import { studentAPI, feePlanAPI } from '../../services/api'
 
 const AssignmentModal = ({ assignment, onClose, onSave }) => {
+  const [minDueDate] = useState(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const tzOffset = today.getTimezoneOffset()
+    const localMidnight = new Date(today.getTime() - tzOffset * 60 * 1000)
+    return localMidnight.toISOString().split('T')[0]
+  })
   const [formData, setFormData] = useState({
     studentId: '',
     feePlanId: '',
-    dueDate: ''
+    dueDate: minDueDate
   })
 
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submissionError, setSubmissionError] = useState('')
 
   // Fetch students from API
   const [students, setStudents] = useState([])
@@ -59,10 +67,15 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
       setFormData({
         studentId: assignment.studentId || '',
         feePlanId: assignment.feePlanId || '',
-        dueDate: assignment.dueDate || ''
+        dueDate: assignment.dueDate || minDueDate
       })
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        dueDate: minDueDate
+      }))
     }
-  }, [assignment])
+  }, [assignment, minDueDate])
 
   const validateForm = () => {
     const newErrors = {}
@@ -77,6 +90,43 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
     
     if (!formData.dueDate) {
       newErrors.dueDate = 'Due date is required'
+    } else {
+      const selectedDate = new Date(formData.dueDate)
+      const today = new Date(minDueDate)
+      if (selectedDate < today) {
+        newErrors.dueDate = 'Due date cannot be in the past'
+      }
+    }
+
+    const selectedStudent = students.find(s => s.id === formData.studentId)
+    const selectedFeePlan = feePlans.find(f => f.id === formData.feePlanId)
+
+    if (selectedStudent && selectedFeePlan) {
+      const studentCourses = extractCourses(selectedStudent)
+      if (!studentCourses.length) {
+        newErrors.feePlanId = 'Student does not have a valid course enrollment'
+      } else if (selectedFeePlan.academicYear) {
+        const parts = selectedFeePlan.academicYear.split('-')
+        if (parts.length === 2) {
+          const planStart = parseInt(parts[0], 10)
+          const planEnd = parseInt(parts[1], 10)
+          if (!Number.isNaN(planStart) && !Number.isNaN(planEnd)) {
+            const matchesCourse = studentCourses.some(course => {
+              if (course.startYear == null || course.endYear == null) return false
+              const courseStart = Number(course.startYear)
+              const courseEnd = Number(course.endYear)
+              return planStart >= courseStart && planEnd <= courseEnd
+            })
+
+            if (!matchesCourse) {
+              const ranges = studentCourses
+                .map(course => `${course.courseName} (${course.startYear}-${course.endYear})`)
+                .join(', ')
+              newErrors.feePlanId = `Fee plan year must fall within the student's course duration: ${ranges}`
+            }
+          }
+        }
+      }
     }
     
     setErrors(newErrors)
@@ -86,6 +136,8 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    setSubmissionError('')
+
     if (!validateForm()) {
       return
     }
@@ -95,12 +147,30 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
     try {
       const selectedStudent = students.find(s => s.id === formData.studentId)
       const selectedFeePlan = feePlans.find(f => f.id === formData.feePlanId)
-      
+      const studentCourses = extractCourses(selectedStudent)
+
+      let matchedCourse = null
+      if (selectedFeePlan?.academicYear) {
+        const parts = selectedFeePlan.academicYear.split('-')
+        if (parts.length === 2) {
+          const planStart = parseInt(parts[0], 10)
+          const planEnd = parseInt(parts[1], 10)
+          matchedCourse = studentCourses.find(course => {
+            if (course.startYear == null || course.endYear == null) return false
+            const courseStart = Number(course.startYear)
+            const courseEnd = Number(course.endYear)
+            return planStart >= courseStart && planEnd <= courseEnd
+          }) || studentCourses[0]
+        }
+      }
+
+      matchedCourse = matchedCourse || studentCourses[0]
+
       const assignmentData = {
         ...formData,
         studentName: selectedStudent?.firstName + ' ' + selectedStudent?.lastName,
         studentEmail: selectedStudent?.email,
-        course: selectedStudent?.course,
+        course: matchedCourse?.courseName || selectedStudent?.course,
         feePlanName: selectedFeePlan?.course + ' - ' + selectedFeePlan?.academicYear,
         totalAmount: selectedFeePlan?.total
       }
@@ -108,6 +178,12 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
       await onSave(assignmentData)
     } catch (error) {
       console.error('Error saving assignment:', error)
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Unable to assign fee plan'
+      setSubmissionError(message)
     } finally {
       setIsSubmitting(false)
     }
@@ -122,6 +198,32 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
 
   const selectedStudent = students.find(s => s.id === formData.studentId)
   const selectedFeePlan = feePlans.find(f => f.id === formData.feePlanId)
+
+  const extractCourses = (studentRecord) => {
+    if (!studentRecord) return []
+    if (Array.isArray(studentRecord.courses) && studentRecord.courses.length) {
+      return studentRecord.courses
+    }
+    if (studentRecord?.course && studentRecord?.academicYear) {
+      const parts = studentRecord.academicYear.split('-')
+      if (parts.length === 2) {
+        const start = parseInt(parts[0], 10)
+        const end = parseInt(parts[1], 10)
+        if (!Number.isNaN(start) && !Number.isNaN(end)) {
+          return [{
+            courseName: studentRecord.course,
+            startYear: start,
+            endYear: end,
+            primary: true
+          }]
+        }
+      }
+    }
+    return []
+  }
+
+  const studentCourses = selectedStudent ? extractCourses(selectedStudent) : []
+  const studentPrimaryCourse = studentCourses.find(course => course.primary) || studentCourses[0] || null
 
   return (
     <AnimatePresence>
@@ -169,11 +271,18 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
                     className={`form-select ${errors.studentId ? 'form-error' : ''}`}
                   >
                     <option value="">Choose a student</option>
-                    {students.map(student => (
-                      <option key={student.id} value={student.id}>
-                        {student.firstName} {student.lastName} - {student.course}
-                      </option>
-                    ))}
+                    {students.map(student => {
+                      const courses = extractCourses(student)
+                      const primary = courses.find(course => course.primary) || courses[0]
+                      const courseLabel = primary
+                        ? `${primary.courseName} (${primary.startYear}-${primary.endYear})`
+                        : 'No course'
+                      return (
+                        <option key={student.id} value={student.id}>
+                          {student.firstName} {student.lastName} - {courseLabel}
+                        </option>
+                      )
+                    })}
                   </select>
                   {errors.studentId && (
                     <p className="form-error-message">{errors.studentId}</p>
@@ -214,6 +323,7 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
                     value={formData.dueDate}
                     onChange={(e) => handleChange('dueDate', e.target.value)}
                     className={`form-input ${errors.dueDate ? 'form-error' : ''}`}
+                    min={minDueDate}
                   />
                   {errors.dueDate && (
                     <p className="form-error-message">{errors.dueDate}</p>
@@ -231,8 +341,23 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
                       </div>
                       <div className="assignment-summary-row">
                         <span className="assignment-summary-label">Course:</span>
-                        <span className="assignment-summary-value">{selectedStudent.course}</span>
+                        <span className="assignment-summary-value">
+                          {studentPrimaryCourse
+                            ? `${studentPrimaryCourse.courseName} (${studentPrimaryCourse.startYear}-${studentPrimaryCourse.endYear})`
+                            : 'N/A'}
+                        </span>
                       </div>
+                      {studentCourses.length > 1 && (
+                        <div className="assignment-summary-row">
+                          <span className="assignment-summary-label">Additional Courses:</span>
+                          <span className="assignment-summary-value">
+                            {studentCourses
+                              .filter(course => !course.primary)
+                              .map(course => `${course.courseName} (${course.startYear}-${course.endYear})`)
+                              .join(', ')}
+                          </span>
+                        </div>
+                      )}
                       <div className="assignment-summary-row">
                         <span className="assignment-summary-label">Fee Plan:</span>
                         <span className="assignment-summary-value">{selectedFeePlan.course} - {selectedFeePlan.academicYear}</span>
@@ -250,6 +375,12 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
                         </span>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {submissionError && (
+                  <div className="form-submit-error" role="alert">
+                    {submissionError}
                   </div>
                 )}
 

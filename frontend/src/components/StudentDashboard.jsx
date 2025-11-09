@@ -90,7 +90,7 @@ const StudentDashboard = ({ student, onBack }) => {
             onClick={onBack}
             className="student-back-button"
           >
-            ← Back to Home
+          Back to Home
           </button>
         </div>
       </div>
@@ -120,7 +120,7 @@ const StudentDashboard = ({ student, onBack }) => {
               Welcome back, {student?.firstName}!
             </h2>
             <p className="welcome-subtitle">
-              {student?.course} • {student?.academicYear}
+              {student?.course} - {student?.academicYear}
             </p>
           </div>
           <div className="welcome-balance">
@@ -383,7 +383,7 @@ const StudentDashboard = ({ student, onBack }) => {
             </div>
             <div className="student-details">
               <h2>Student Dashboard</h2>
-              <p>{student?.firstName} {student?.lastName} • {student?.course}</p>
+              <p>{student?.firstName} {student?.lastName} - {student?.course}</p>
             </div>
           </div>
         </div>

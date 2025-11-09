@@ -146,7 +146,7 @@ const PaymentsPage = ({ onBack }) => {
               onClick={onBack}
               title="Back to Dashboard"
             >
-              ← Back to Dashboard
+              Back to Dashboard
             </button>
           )}
           <h2 className="payments-title">Payments</h2>
@@ -273,12 +273,14 @@ const PaymentsPage = ({ onBack }) => {
               <tbody>
                 {filteredPayments.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="empty-state">
-                      <div className="empty-content">
-                        <div className="empty-icon">💳</div>
-                        <div className="empty-title">No payments found</div>
-                        <div className="empty-description">
-                          {searchTerm ? 'Try adjusting your search terms' : 'No payment records available'}
+                    <td colSpan="8">
+                      <div className="empty-state">
+                        <div className="empty-content">
+                          <div className="empty-icon">No Payments</div>
+                          <div className="empty-title">No payments found</div>
+                          <div className="empty-description">
+                            {searchTerm ? 'Try adjusting your search terms' : 'No payment records available'}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -326,12 +328,12 @@ const PaymentsPage = ({ onBack }) => {
                       </td>
                       <td>
                         <div className="table-cell reference-number">
-                          {payment.referenceNo || '—'}
+                          {payment.referenceNo || 'N/A'}
                         </div>
                       </td>
                       <td>
                         <div className="table-cell">
-                          {payment.notes || '—'}
+                          {payment.notes || 'N/A'}
                         </div>
                       </td>
                       <td>
@@ -365,7 +367,7 @@ const PaymentsPage = ({ onBack }) => {
                   className="modal-close-button"
                   onClick={() => setShowPaymentModal(false)}
                 >
-                  ×
+                  Close
                 </button>
               </div>
               <div className="modal-content">

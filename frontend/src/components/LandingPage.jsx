@@ -5,12 +5,20 @@ import { Users, Shield, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { studentAPI } from '../services/api'
+import axios from 'axios'
+import { API_BASE_URL } from '../config'
 
 const LandingPage = () => {
   const navigate = useNavigate()
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [environmentMode, setEnvironmentMode] = useState('')
+  const [demoMode, setDemoMode] = useState(false)
+  const [appInfoLoading, setAppInfoLoading] = useState(true)
+  const [appInfoError, setAppInfoError] = useState('')
+
+  const activeDemoMode = appInfoLoading ? false : demoMode
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -35,8 +43,36 @@ const LandingPage = () => {
   }
 
   useEffect(() => {
-    fetchStudents()
+    const fetchAppInfo = async () => {
+      try {
+        setAppInfoLoading(true)
+        const response = await axios.get(`${API_BASE_URL}/config/app-info`)
+        const { environmentMode: mode, demoMode: isDemo } = response.data || {}
+        const normalizedMode = (mode || '').toString().toUpperCase()
+        setEnvironmentMode(normalizedMode)
+        setDemoMode(Boolean(isDemo))
+      } catch (err) {
+        console.error('Error fetching app info:', err)
+        setAppInfoError('Unable to determine deployment mode.')
+        setEnvironmentMode('DEMO MODE')
+        setDemoMode(true)
+      } finally {
+        setAppInfoLoading(false)
+      }
+    }
+
+    fetchAppInfo()
   }, [])
+
+  useEffect(() => {
+    if (demoMode) {
+      fetchStudents()
+    } else {
+      setStudents([])
+      setLoading(false)
+      setError('')
+    }
+  }, [demoMode])
 
   const fetchStudents = async () => {
     try {
@@ -50,6 +86,31 @@ const LandingPage = () => {
       setLoading(false)
     }
   }
+
+  const handleAdminAction = () => {
+    if (activeDemoMode) {
+      navigate('/admin')
+    } else {
+      navigate('/login/admin')
+    }
+  }
+
+  const handleAdminKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      handleAdminAction()
+    }
+  }
+
+  const handleStudentLogin = () => {
+    navigate('/login/student')
+  }
+
+  useEffect(() => {
+    const baseTitle = 'Fee Management System'
+    const modeLabel = demoMode ? 'Demo' : 'Production'
+    document.title = `${baseTitle} - ${modeLabel}`
+  }, [demoMode])
 
 
   return (
@@ -69,6 +130,15 @@ const LandingPage = () => {
             <p className="landing-subtitle">
               Professional fee collection and student management platform
             </p>
+            {!appInfoLoading && (
+              <p className="landing-subtitle" aria-live="polite">
+                {environmentMode === 'PRODUCTION MODE'
+                  ? 'Production environment'
+                  : environmentMode === 'DEMO MODE'
+                    ? 'Demo environment'
+                    : 'Connecting...'}
+              </p>
+            )}
           </motion.div>
 
 
@@ -78,16 +148,11 @@ const LandingPage = () => {
               {/* Admin Card */}
               <div
                 className="role-card-wrapper"
-                onClick={() => navigate('/admin')}
+                onClick={handleAdminAction}
                 role="button"
                 tabIndex={0}
                 aria-label="Continue as Administrator"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    navigate('/admin')
-                  }
-                }}
+                onKeyDown={handleAdminKeyDown}
               >
                 <Card className="role-card admin-card">
                   <CardContent className="role-card-content">
@@ -103,7 +168,7 @@ const LandingPage = () => {
                       size="lg"
                       className="role-button"
                     >
-                      Continue as Admin
+                      {activeDemoMode ? 'Continue as Admin' : 'Admin Login'}
                       <ArrowRight className="button-arrow" />
                     </Button>
                   </CardContent>
@@ -122,13 +187,14 @@ const LandingPage = () => {
                       View your fees, make payments, and track your payment history.
                     </p>
                     
-                    {error && (
+                    {error && activeDemoMode && (
                       <div className="error-message">
                         {error}
                       </div>
                     )}
                     
-                    {loading ? (
+                    {activeDemoMode ? (
+                      loading ? (
                       <div className="loading-container" role="status" aria-label="Loading students">
                         <div className="loading-spinner"></div>
                         <p className="loading-text">Loading students...</p>
@@ -159,6 +225,19 @@ const LandingPage = () => {
                     ) : (
                       <div className="no-students" role="status" aria-label="No students available">
                         <p className="no-students-text">No students found</p>
+                        </div>
+                      )
+                    ) : (
+                      <div className="student-selection" role="group" aria-label="Student Login">
+                        <Button 
+                          variant="primary" 
+                          size="lg"
+                          className="role-button"
+                          onClick={handleStudentLogin}
+                        >
+                          Student Login
+                          <ArrowRight className="button-arrow" />
+                        </Button>
                       </div>
                     )}
                   </CardContent>

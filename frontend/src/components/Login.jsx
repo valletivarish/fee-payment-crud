@@ -1,33 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     usernameOrEmail: '',
     password: ''
   });
-  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [appInfoError, setAppInfoError] = useState('');
+  const [environmentMode, setEnvironmentMode] = useState('');
 
-  const { login, register } = useAuth();
+  const { login } = useAuth();
+
+  useEffect(() => {
+    const fetchAppInfo = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/config/app-info`);
+        const { environmentMode: mode, demoMode: isDemo } = response.data || {};
+        const normalizedEnvironment = (mode || '').toString().toUpperCase();
+        setEnvironmentMode(normalizedEnvironment);
+      } catch (err) {
+        setAppInfoError('Unable to load environment information.');
+      }
+    };
+
+    fetchAppInfo();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
-      if (isLogin) {
-        await login(formData);
-        setSuccess('Login successful!');
-      } else {
-        await register(formData);
-        setSuccess('Registration successful! Please login.');
-        setIsLogin(true);
-      }
+      await login(formData);
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred');
     } finally {
@@ -42,105 +51,67 @@ const Login = () => {
     });
   };
 
+  const formatModeLabel = (value) => {
+    switch ((value || '').toUpperCase()) {
+      case 'DEMO MODE':
+        return 'Demo Mode';
+      case 'PRODUCTION MODE':
+        return 'Production Mode';
+      default:
+        return value;
+    }
+  };
+
   return (
-    <div className="container">
-      <div className="login-container">
-        <h1 className="page-title">
-          {isLogin ? 'Login' : 'Register'}
-        </h1>
-        
-        {error && <div className="error">{error}</div>}
-        {success && <div className="success">{success}</div>}
+    <div className="login-page">
+      <div className="login-wrapper">
+        <div className="login-card">
+          <h1 className="login-title">Sign in to your account</h1>
+          <p className="login-subtitle">Access the fee management dashboard</p>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          {!isLogin && (
-            <>
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="form-input"
-                  value={formData.name || ''}
-                  onChange={handleInputChange}
-                  required={!isLogin}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Username</label>
-                <input
-                  type="text"
-                  name="username"
-                  className="form-input"
-                  value={formData.username || ''}
-                  onChange={handleInputChange}
-                  required={!isLogin}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="form-input"
-                  value={formData.email || ''}
-                  onChange={handleInputChange}
-                  required={!isLogin}
-                />
-              </div>
-            </>
-          )}
-          
-          <div className="form-group">
-            <label className="form-label">
-              {isLogin ? 'Username or Email' : 'Username or Email'}
-            </label>
-            <input
-              type="text"
-              name="usernameOrEmail"
-              className="form-input"
-              value={formData.usernameOrEmail}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              name="password"
-              className="form-input"
-              value={formData.password}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+          {error && <div className="login-alert error">{error}</div>}
+          {appInfoError && <div className="login-alert error">{appInfoError}</div>}
 
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-full"
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
-          </button>
-        </form>
+        <div className="login-mode-row">
+          <span className="login-mode-label">Environment:</span>
+          <span className="login-badge">{formatModeLabel(environmentMode)}</span>
+        </div>
 
-        <div className="auth-switch">
-          <p>
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <form onSubmit={handleSubmit} className="login-form">
+            <div className="login-form-group">
+              <label className="login-label">Username or Email</label>
+              <input
+                type="text"
+                name="usernameOrEmail"
+                className="login-input"
+                value={formData.usernameOrEmail}
+                onChange={handleInputChange}
+                required
+                autoComplete="username"
+              />
+            </div>
+            
+            <div className="login-form-group">
+              <label className="login-label">Password</label>
+              <input
+                type="password"
+                name="password"
+                className="login-input"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
             <button 
-              type="button" 
-              className="btn-link"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-                setSuccess('');
-              }}
+              type="submit" 
+              className="login-button"
+              disabled={loading}
             >
-              {isLogin ? 'Register' : 'Login'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
-          </p>
+          </form>
         </div>
       </div>
     </div>

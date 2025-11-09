@@ -74,7 +74,7 @@ const AssignmentsPage = ({ onBack }) => {
               onClick={onBack}
               title="Back to Dashboard"
             >
-              ← Back to Dashboard
+              Back to Dashboard
             </button>
           )}
           <h2 className="text-2xl font-bold text-gray-900">Fee Assignments</h2>

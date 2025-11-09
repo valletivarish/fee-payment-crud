@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
 import './App.css';
 import LandingPage from './components/LandingPage';
 import AdminDashboard from './components/AdminDashboard';
 import StudentDashboard from './components/StudentDashboard';
 import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8080/api';
+import { API_BASE_URL } from './config';
+import RoleLoginPage from './components/RoleLoginPage';
 
 // Student Selection Component
 function StudentSelection() {
@@ -72,7 +72,7 @@ function StudentSelection() {
                   {student.firstName} {student.lastName}
                 </div>
                 <div className="student-email">{student.email}</div>
-                <div className="student-details">{student.course} • {student.academicYear}</div>
+                <div className="student-details">{student.course} - {student.academicYear}</div>
               </button>
             ))}
           </div>
@@ -87,7 +87,7 @@ function StudentSelection() {
             onClick={handleBackToHome}
             className="back-button"
           >
-            ← Back to Home
+            Back to Home
           </button>
         </div>
       </div>
@@ -137,7 +137,7 @@ function StudentDashboardWithId() {
       <div className="error-container">
         <div className="error-message">{error}</div>
         <button onClick={handleBackToHome} className="back-button">
-          ← Back to Home
+          Back to Home
         </button>
       </div>
     );
@@ -148,7 +148,7 @@ function StudentDashboardWithId() {
       <div className="error-container">
         <div className="error-message">Student not found</div>
         <button onClick={handleBackToHome} className="back-button">
-          ← Back to Home
+          Back to Home
         </button>
       </div>
     );
@@ -170,7 +170,6 @@ function AdminDashboardWithNavigation() {
 
 function App() {
   return (
-    <Router>
       <div className="App">
         {/* Live region for announcements */}
         <div 
@@ -186,12 +185,12 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/admin" element={<AdminDashboardWithNavigation />} />
+        <Route path="/login/:role" element={<RoleLoginPage />} />
           <Route path="/student-selection" element={<StudentSelection />} />
           <Route path="/student/:studentId" element={<StudentDashboardWithId />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-    </Router>
   );
 }
 

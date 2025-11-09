@@ -108,7 +108,7 @@ const FeePlansPage = ({ onBack }) => {
               onClick={onBack}
               title="Back to Dashboard"
             >
-              ← Back to Dashboard
+              Back to Dashboard
             </button>
           )}
           <h2 className="fee-plans-title">Fee Plans</h2>

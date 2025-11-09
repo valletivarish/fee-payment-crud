@@ -48,6 +48,14 @@ export const generateAcademicYears = () => {
 
 export const getAcademicYearOptions = () => generateAcademicYears()
 
+export const getDegreeOptions = () => [
+  { value: 'BACHELOR', label: 'Bachelor\'s Degree', durationYears: 4 },
+  { value: 'MASTER', label: 'Master\'s Degree', durationYears: 2 },
+  { value: 'DIPLOMA', label: 'Diploma', durationYears: 3 },
+  { value: 'DUAL', label: 'Dual Degree', durationYears: 5 },
+  { value: 'OTHER', label: 'Other', durationYears: null }
+]
+
 export const getPaymentMethods = () => [
   { value: 'CASH', label: 'Cash' },
   { value: 'CARD', label: 'Card' },

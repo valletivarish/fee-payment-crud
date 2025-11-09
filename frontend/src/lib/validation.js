@@ -46,16 +46,65 @@ export const validateStudent = (student) => {
     errors.email = 'Email must not exceed 100 characters';
   }
   
-  if (!validateRequired(student.course)) {
-    errors.course = 'Course is required';
-  } else if (!validateStringLength(student.course, 1, 100)) {
-    errors.course = 'Course must not exceed 100 characters';
+  if (!validateRequired(student.degreeType)) {
+    errors.degreeType = 'Degree type is required';
   }
-  
-  if (!validateRequired(student.academicYear)) {
-    errors.academicYear = 'Academic year is required';
-  } else if (!validateAcademicYear(student.academicYear)) {
-    errors.academicYear = 'Academic year must be in format YYYY-YYYY';
+
+  if (student.degreeDurationYears !== undefined && student.degreeDurationYears !== null) {
+    const duration = parseInt(student.degreeDurationYears, 10);
+    if (isNaN(duration)) {
+      errors.degreeDurationYears = 'Degree duration must be a number';
+    } else if (duration < 1 || duration > 10) {
+      errors.degreeDurationYears = 'Degree duration must be between 1 and 10 years';
+    }
+  }
+
+  const courseErrors = [];
+  const courses = Array.isArray(student.courses) ? student.courses : [];
+
+  if (!courses.length) {
+    courseErrors.push({ courseName: 'At least one course is required' });
+  } else {
+    if (student.degreeType !== 'DUAL' && courses.length > 1) {
+      errors.degreeType = 'Additional courses are allowed only for Dual Degree students';
+    }
+
+    courses.forEach((course, index) => {
+      const entryErrors = {};
+      if (!validateRequired(course.courseName)) {
+        entryErrors.courseName = 'Course name is required';
+      } else if (!validateStringLength(course.courseName, 1, 100)) {
+        entryErrors.courseName = 'Course name must not exceed 100 characters';
+      }
+
+      const startYear = parseInt(course.startYear, 10);
+      const endYear = parseInt(course.endYear, 10);
+
+      if (isNaN(startYear)) {
+        entryErrors.startYear = 'Start year is required';
+      } else if (startYear < 1900 || startYear > 3000) {
+        entryErrors.startYear = 'Start year must be between 1900 and 3000';
+      }
+
+      if (isNaN(endYear)) {
+        entryErrors.endYear = 'End year is required';
+      } else if (endYear < 1900 || endYear > 3000) {
+        entryErrors.endYear = 'End year must be between 1900 and 3000';
+      } else if (!isNaN(startYear) && endYear <= startYear) {
+        entryErrors.endYear = 'End year must be after start year';
+      }
+
+      courseErrors[index] = entryErrors;
+    });
+
+    const hasPrimary = courses.some(course => course.primary);
+    if (!hasPrimary && courseErrors.length) {
+      courseErrors[0] = { ...(courseErrors[0] || {}), primary: 'Select a primary course' };
+    }
+  }
+
+  if (courseErrors.some(entry => entry && Object.keys(entry).length > 0)) {
+    errors.courses = courseErrors;
   }
   
   return {

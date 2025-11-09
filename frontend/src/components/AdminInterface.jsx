@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { getCourseOptions, getAcademicYearOptions } from '../services/dataService';
-
-const API_BASE_URL = 'http://localhost:8080/api';
+import { getCourseOptions, getDegreeOptions, getAcademicYearOptions } from '../services/dataService';
+import { API_BASE_URL } from '../config';
 
 const AdminInterface = ({ onStudentCreated }) => {
   const [students, setStudents] = useState([]);
@@ -13,17 +12,22 @@ const AdminInterface = ({ onStudentCreated }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Course options from centralized service
+  const courseOptions = useMemo(() => getCourseOptions(), []);
+  const degreeOptions = useMemo(() => getDegreeOptions(), []);
+  const academicYearOptions = useMemo(() => getAcademicYearOptions(), []);
+
   // Student creation form
   const [newStudent, setNewStudent] = useState({
     firstName: '',
     lastName: '',
     email: '',
     course: '',
-    academicYear: ''
+    courseStartYear: '',
+    courseEndYear: '',
+    degreeType: degreeOptions[0]?.value || '',
+    degreeDurationYears: degreeOptions[0]?.durationYears || ''
   });
-
-  // Course options from centralized service
-  const courseOptions = getCourseOptions();
 
   // State for custom course input
   const [showCustomCourse, setShowCustomCourse] = useState(false);
@@ -65,8 +69,6 @@ const AdminInterface = ({ onStudentCreated }) => {
   };
 
   // Academic year options from centralized service
-  const academicYearOptions = getAcademicYearOptions();
-
   // Form states
   const [newFeePlan, setNewFeePlan] = useState({
     course: '',
@@ -235,9 +237,57 @@ const AdminInterface = ({ onStudentCreated }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await axios.post(`${API_BASE_URL}/students`, newStudent);
+      setError('');
+      setSuccess('');
+      const startYear = parseInt(newStudent.courseStartYear, 10)
+      const endYear = parseInt(newStudent.courseEndYear, 10)
+
+      if (Number.isNaN(startYear) || Number.isNaN(endYear)) {
+        setError('Please provide valid course start and end years')
+        setLoading(false)
+        return
+      }
+
+      if (endYear <= startYear) {
+        setError('Course end year must be after start year')
+        setLoading(false)
+        return
+      }
+
+      await axios.post(`${API_BASE_URL}/students`, {
+        firstName: newStudent.firstName,
+        lastName: newStudent.lastName,
+        email: newStudent.email,
+        course: newStudent.course,
+        degreeType: newStudent.degreeType || degreeOptions[0]?.value || '',
+        degreeDurationYears: newStudent.degreeDurationYears
+          ? Number(newStudent.degreeDurationYears)
+          : undefined,
+        courses: [
+          {
+            courseName: newStudent.course,
+            startYear,
+            endYear,
+            primary: true
+          }
+        ],
+        academicYear: newStudent.courseStartYear && newStudent.courseEndYear
+          ? `${newStudent.courseStartYear}-${newStudent.courseEndYear}`
+          : ''
+      });
       setSuccess('Student added successfully!');
-      setNewStudent({ firstName: '', lastName: '', email: '', course: '', academicYear: '' });
+      setNewStudent({
+        firstName: '',
+        lastName: '',
+        email: '',
+        course: '',
+        courseStartYear: '',
+        courseEndYear: '',
+        degreeType: degreeOptions[0]?.value || '',
+        degreeDurationYears: degreeOptions[0]?.durationYears || ''
+      });
+      setShowCustomCourse(false);
+      setCustomCourse('');
       fetchStudents();
       if (onStudentCreated) {
         onStudentCreated();
@@ -350,20 +400,64 @@ const AdminInterface = ({ onStudentCreated }) => {
               )}
             </div>
             <div className="form-group">
-              <label className="form-label">Academic Year</label>
+              <label className="form-label">Degree</label>
               <select
                 className="form-select"
-                value={newStudent.academicYear}
-                onChange={(e) => setNewStudent({...newStudent, academicYear: e.target.value})}
+                value={newStudent.degreeType}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const selectedDegree = degreeOptions.find(option => option.value === value);
+                  setNewStudent({
+                    ...newStudent,
+                    degreeType: value,
+                    degreeDurationYears: selectedDegree?.durationYears ?? ''
+                  });
+                }}
                 required
               >
-                <option value="">Select Academic Year</option>
-                {academicYearOptions.map(year => (
-                  <option key={year} value={year}>
-                    {year}
+                <option value="">Select Degree</option>
+                {degreeOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Degree Duration (years)</label>
+              <input
+                type="number"
+                className="form-input"
+                value={newStudent.degreeDurationYears}
+                onChange={(e) => setNewStudent({...newStudent, degreeDurationYears: e.target.value})}
+                min="1"
+                max="10"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Course Start Year</label>
+              <input
+                type="number"
+                className="form-input"
+                value={newStudent.courseStartYear}
+                onChange={(e) => setNewStudent({...newStudent, courseStartYear: e.target.value})}
+                min="1900"
+                max="3000"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Course End Year</label>
+              <input
+                type="number"
+                className="form-input"
+                value={newStudent.courseEndYear}
+                onChange={(e) => setNewStudent({...newStudent, courseEndYear: e.target.value})}
+                min="1900"
+                max="3000"
+                required
+              />
             </div>
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? 'Adding...' : 'Add Student'}

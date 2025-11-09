@@ -34,6 +34,12 @@ const StudentsPage = ({ onBack }) => {
     fetchStudents()
   }, [])
 
+useEffect(() => {
+  if (showModal || showAssignmentModal) {
+    setError('')
+  }
+}, [showModal, showAssignmentModal])
+
   const fetchStudents = async () => {
     try {
       setLoading(true)
@@ -68,16 +74,19 @@ const StudentsPage = ({ onBack }) => {
 
   const handleSaveStudent = async (studentData) => {
     try {
-      if (editingStudent) {
-        await studentAPI.update(editingStudent.id, studentData)
-      } else {
-        await studentAPI.create(studentData)
+      const response = editingStudent
+        ? await studentAPI.update(editingStudent.id, studentData)
+        : await studentAPI.create(studentData)
+
+      if (response?.data?.error || response?.data?.message) {
+        throw { response: { data: response.data } }
       }
+
       await fetchStudents()
       setShowModal(false)
       setEditingStudent(null)
     } catch (err) {
-      setError('Failed to save student: ' + (err.response?.data?.message || err.message))
+      throw err
     }
   }
 
@@ -99,50 +108,71 @@ const StudentsPage = ({ onBack }) => {
     setShowPaymentsModal(true)
   }
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const derivePaymentStatus = (balance, totalFees) => {
+    const numericBalance = balance || 0
+    const numericTotal = totalFees || 0
+
+    if (numericBalance <= 0) {
+      return { key: 'PAID', label: 'Paid' }
+    }
+
+    if (numericTotal > 0 && numericBalance < numericTotal) {
+      return { key: 'PARTIAL', label: 'Partial' }
+    }
+
+    return { key: 'PENDING', label: 'Pending' }
+  }
+
+  const extractCourses = (student) => {
+    if (Array.isArray(student.courses) && student.courses.length) {
+      return student.courses
+    }
+    if (student.course && student.academicYear) {
+      const parts = student.academicYear.split('-')
+      if (parts.length === 2) {
+        return [{
+          courseName: student.course,
+          startYear: parts[0],
+          endYear: parts[1],
+          primary: true,
+        }]
+      }
+    }
+    return []
+  }
+
+  const studentsWithStatus = students.map(student => {
+    const { key, label } = derivePaymentStatus(student.balance, student.totalFees)
+    const courseList = extractCourses(student)
+    const primaryCourse = courseList.find(course => course.primary) || courseList[0] || null
+
+    return {
+      ...student,
+      paymentStatus: key,
+      paymentStatusLabel: label,
+      courseList,
+      primaryCourse,
+    }
+  })
+
+  const filteredStudents = studentsWithStatus.filter(student => {
+    const matchesSearch =
+      student.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.primaryCourse?.courseName?.toLowerCase().includes(searchTerm.toLowerCase())
     
     let matchesFilter = true
     if (filterStatus !== 'all') {
-      const balance = student.balance || 0
-      if (filterStatus === 'PAID' && balance === 0) {
-        matchesFilter = true
-      } else if (filterStatus === 'PARTIAL' && balance > 0 && balance < (student.totalFees || 0)) {
-        matchesFilter = true
-      } else if (filterStatus === 'PENDING' && balance >= (student.totalFees || 0)) {
-        matchesFilter = true
-      } else {
-        matchesFilter = false
-      }
+      matchesFilter = student.paymentStatus === filterStatus
     }
     
     return matchesSearch && matchesFilter
   })
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'PAID':
-        return <span className="status-badge success">Paid</span>
-      case 'PARTIAL':
-        return <span className="status-badge warning">Partial</span>
-      case 'PENDING':
-        return <span className="status-badge danger">Pending</span>
-      default:
-        return <span className="status-badge secondary">—</span>
-    }
-  }
-
-  const getPaymentStatus = (balance) => {
-    if (balance === 0) {
-      return <span className="status-badge success">Paid</span>
-    } else if (balance < 10000) {
-      return <span className="status-badge warning">Partial</span>
-    } else {
-      return <span className="status-badge danger">Pending</span>
-    }
-  }
+  const renderStatusBadge = (student) => (
+    <span className="status-badge">{student.paymentStatusLabel}</span>
+  )
 
   if (loading) {
     return (
@@ -164,7 +194,7 @@ const StudentsPage = ({ onBack }) => {
               onClick={onBack}
               title="Back to Dashboard"
             >
-              ← Back to Dashboard
+              Back to Dashboard
             </button>
           )}
           <h2 className="students-title">Students</h2>
@@ -266,10 +296,27 @@ const StudentsPage = ({ onBack }) => {
                       </div>
                     </td>
                     <td>
-                      <div className="table-cell">{student.course}</div>
+                      <div className="table-cell">
+                        {student.primaryCourse?.courseName || student.course || 'N/A'}
+                        {student.courseList?.length > 1 && (
+                          <div className="table-cell-subtext">
+                            {student.courseList
+                              .filter(course => !course.primary)
+                              .map((course) => (
+                                <span key={`${course.courseName}-${course.startYear}`} className="course-pill">
+                                  {course.courseName} ({course.startYear}-{course.endYear})
+                                </span>
+                              ))}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
-                      <div className="table-cell">{student.academicYear}</div>
+                      <div className="table-cell">
+                        {student.primaryCourse
+                          ? `${student.primaryCourse.startYear}-${student.primaryCourse.endYear}`
+                          : student.academicYear || 'N/A'}
+                      </div>
                     </td>
                     <td>
                       <div className="table-cell amount">
@@ -284,7 +331,7 @@ const StudentsPage = ({ onBack }) => {
                       </div>
                     </td>
                     <td>
-                      {getPaymentStatus(student.balance || 0)}
+                      {renderStatusBadge(student)}
                     </td>
                     <td>
                       <div className="action-buttons">
@@ -388,7 +435,7 @@ const StudentsPage = ({ onBack }) => {
               await fetchStudents()
             } catch (error) {
               console.error('Failed to create assignment:', error)
-              // You might want to show an error message to the user here
+              throw error
             }
           }}
         />
