@@ -2,6 +2,7 @@ com\organization\repository\StudentFeeRepository.class
 com\organization\entity\Payment$Method.class
 com\organization\controller\PaymentController.class
 com\organization\controller\AuthController.class
+com\organization\dto\AppInfoResponse.class
 com\organization\dto\RegisterDto.class
 com\organization\repository\StudentRepository.class
 com\organization\exception\StudentNotFoundException.class
@@ -12,12 +13,14 @@ com\organization\security\JwtAuthenticationFilter.class
 com\organization\controller\HealthController.class
 com\organization\exception\GlobalExceptionHandler.class
 com\organization\exception\NoStudentRecordFoundException.class
+com\organization\config\OpenApiConfig.class
 com\organization\repository\PaymentRepository.class
 com\organization\controller\StudentController.class
 com\organization\dto\JWTAuthResponse.class
 com\organization\service\CustomUserDetailsService.class
 com\organization\controller\StudentFeeController.class
 com\organization\service\StudentFeeServiceImpl.class
+com\organization\controller\DbStatsController.class
 com\organization\dto\LoginDto.class
 com\organization\entity\User.class
 com\organization\exception\StudentErrorResponse.class
@@ -39,6 +42,7 @@ com\organization\security\JwtAuthenticationEntryPoint.class
 com\organization\service\AuthService.class
 com\organization\entity\StudentFee.class
 com\organization\entity\Student$CourseEnrollment.class
+com\organization\controller\AppInfoController.class
 com\organization\entity\Payment.class
 com\organization\entity\Student.class
 com\organization\entity\FeePlan.class

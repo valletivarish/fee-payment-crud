@@ -1,0 +1,8 @@
+# Backend build output
+backend/target/
+
+# Node modules
+frontend/node_modules/
+
+# Local environment files
+.env

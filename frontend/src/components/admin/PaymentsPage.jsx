@@ -134,226 +134,194 @@ const PaymentsPage = ({ onBack }) => {
     )
   }
 
-  
-  return (
-    <div className="payments-page">
-      {/* Header */}
-      <div className="payments-header">
-        <div className="payments-title-section">
-          {onBack && (
-            <button 
-              className="back-button"
-              onClick={onBack}
-              title="Back to Dashboard"
-            >
-              Back to Dashboard
-            </button>
-          )}
-          <h2 className="payments-title">Payments</h2>
-          <p className="payments-subtitle">View and manage all payment transactions</p>
+  const renderStats = () => (
+    <div className="payments-metrics">
+      <div className="payments-kpi">
+        <div className="payments-kpi-icon">
+          <CreditCard className="w-5 h-5" />
+        </div>
+        <div className="payments-kpi-body">
+          <span className="payments-kpi-label">Total Payments</span>
+          <span className="payments-kpi-value">{payments.length}</span>
         </div>
       </div>
-
-      {error && (
-        <div className="error-message">
-          {error}
+      <div className="payments-kpi">
+        <div className="payments-kpi-icon">
+          <DollarSign className="w-5 h-5" />
         </div>
-      )}
-
-
-      {/* Stats Cards */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-card-inner">
-            <div className="stat-content">
-              <div className="stat-header">
-                <p className="stat-title">Total Payments</p>
-                <p className="stat-value">{payments.length}</p>
-              </div>
-              <div className="stat-icon">
-                <CreditCard className="stat-icon" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-inner">
-            <div className="stat-content">
-              <div className="stat-header">
-                <p className="stat-title">Total Amount</p>
-                <p className="stat-value">{formatCurrency(totalAmount)}</p>
-              </div>
-              <div className="stat-icon">
-                <DollarSign className="stat-icon" />
-              </div>
-            </div>
-          </div>
+        <div className="payments-kpi-body">
+          <span className="payments-kpi-label">Total Amount</span>
+          <span className="payments-kpi-value">{formatCurrency(totalAmount)}</span>
         </div>
       </div>
+    </div>
+  )
 
-      {/* Filters */}
-      <div className="filters-card">
-        <div className="filters-content">
-          <div className="search-section">
-            <div className="search-input-container">
-              <Search className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search payments..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
-          </div>
-          <div className="filter-controls">
-            <select
-              value={filterMethod}
-              onChange={(e) => setFilterMethod(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Methods</option>
-              <option value="UPI">UPI</option>
-              <option value="CARD">Card</option>
-              <option value="NET_BANKING">Net Banking</option>
-              <option value="CASH">Cash</option>
-              <option value="OTHER">Other</option>
-            </select>
-            <input
-              type="date"
-              value={filterFromDate}
-              onChange={(e) => setFilterFromDate(e.target.value)}
-              className="filter-select"
-              placeholder="From Date"
-            />
-            <input
-              type="date"
-              value={filterToDate}
-              onChange={(e) => setFilterToDate(e.target.value)}
-              className="filter-select"
-              placeholder="To Date"
-            />
-            <button 
-              className="filter-button"
-              onClick={() => {
-                setFilterMethod('all')
-                setFilterFromDate('')
-                setFilterToDate('')
-              }}
-            >
-              <Filter className="filter-icon" />
-              Clear Filters
-            </button>
-          </div>
-        </div>
+  const renderFilters = () => (
+    <div className="payments-filter-bar">
+      <div className="search-input-container">
+        <Search className="search-icon" />
+        <input
+          type="text"
+          placeholder="Search payments..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
       </div>
+      <div className="payments-filter-controls">
+        <select
+          value={filterMethod}
+          onChange={(e) => setFilterMethod(e.target.value)}
+          className="filter-select"
+        >
+          <option value="all">All Methods</option>
+          <option value="UPI">UPI</option>
+          <option value="CARD">Card</option>
+          <option value="NET_BANKING">Net Banking</option>
+          <option value="CASH">Cash</option>
+          <option value="OTHER">Other</option>
+        </select>
+        <input
+          type="date"
+          value={filterFromDate}
+          onChange={(e) => setFilterFromDate(e.target.value)}
+          className="filter-select"
+          placeholder="From Date"
+        />
+        <input
+          type="date"
+          value={filterToDate}
+          onChange={(e) => setFilterToDate(e.target.value)}
+          className="filter-select"
+          placeholder="To Date"
+        />
+        <button 
+          className="filter-button"
+          onClick={() => {
+            setFilterMethod('all')
+            setFilterFromDate('')
+            setFilterToDate('')
+          }}
+        >
+          <Filter className="filter-icon" />
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  )
 
-      {/* Payments Table */}
-      <div className="payments-table-card">
-        <div className="payments-table-header">
+  const renderTable = () => (
+    <div className="payments-table-card">
+      <div className="payments-table-header">
+        <div className="payments-table-heading">
           <h3 className="payments-table-title">Payment History ({filteredPayments.length})</h3>
           <p className="payments-table-subtitle">Complete list of payment transactions</p>
         </div>
-        <div className="payments-table-content">
-          <div className="table-container">
-            <table className="payments-table">
-              <thead>
+      </div>
+      <div className="payments-table-content">
+        <div className="table-container">
+          <table className="payments-table">
+            <thead>
+              <tr>
+                <th className="col-student">Student</th>
+                <th className="col-fee">Fee</th>
+                <th className="col-amount">Amount</th>
+                <th className="col-method">Method</th>
+                <th className="col-date">Date</th>
+                <th className="col-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayments.length === 0 ? (
                 <tr>
-                  <th>Student</th>
-                  <th>Fee</th>
-                  <th>Amount</th>
-                  <th>Method</th>
-                  <th>Date</th>
-                  <th>Reference</th>
-                  <th>Notes</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayments.length === 0 ? (
-                  <tr>
-                    <td colSpan="8">
-                      <div className="empty-state">
-                        <div className="empty-content">
-                          <div className="empty-icon">No Payments</div>
-                          <div className="empty-title">No payments found</div>
-                          <div className="empty-description">
-                            {searchTerm ? 'Try adjusting your search terms' : 'No payment records available'}
-                          </div>
+                  <td colSpan="6">
+                    <div className="empty-state">
+                      <div className="empty-content">
+                        <div className="empty-icon">No Payments</div>
+                        <div className="empty-title">No payments found</div>
+                        <div className="empty-description">
+                          {searchTerm ? 'Try adjusting your search terms' : 'No payment records available'}
                         </div>
                       </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredPayments.map((payment, index) => (
+                  <motion.tr
+                    key={payment.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="payments-table-row"
+                  >
+                    <td className="col-student">
+                      <div className="payments-table-cell">
+                        <div className="payments-student-name">{getStudentName(payment.studentId)}</div>
+                        <div className="payments-student-meta">ID: {payment.studentId}</div>
+                      </div>
                     </td>
-                  </tr>
-                ) : (
-                  filteredPayments.map((payment, index) => (
-                    <motion.tr
-                      key={payment.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="table-row"
-                    >
-                      <td>
-                        <div className="table-cell">
-                          <div className="student-info">
-                            <div className="student-name">{getStudentName(payment.studentId)}</div>
-                            <div className="student-id">ID: {payment.studentId}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="table-cell">
-                          <div className="fee-info">
-                            <div className="fee-course">{getFeeInfo(payment.studentFeeId)}</div>
-                            <div className="fee-id">ID: {payment.studentFeeId}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="table-cell amount">
-                          {formatCurrency(payment.amount || 0)}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="payment-method-cell">
-                          {getMethodIcon(payment.method)}
-                          <span className="payment-method-text">{payment.method}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="table-cell">
-                          {formatDate(payment.paidAt)}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="table-cell reference-number">
-                          {payment.referenceNo || 'N/A'}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="table-cell">
-                          {payment.notes || 'N/A'}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            className="action-btn view"
-                            onClick={() => handleViewPayment(payment)}
-                            title="View payment details"
-                          >
-                            <Eye className="action-icon" />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                    <td className="col-fee">
+                      <div className="payments-table-cell">
+                        <div className="payments-fee-title">{getFeeInfo(payment.studentFeeId)}</div>
+                      </div>
+                    </td>
+                    <td className="col-amount">
+                      <div className="payments-table-cell amount">
+                        {formatCurrency(payment.amount || 0)}
+                      </div>
+                    </td>
+                    <td className="col-method">
+                      <div className="payment-method">
+                        {getMethodIcon(payment.method)}
+                        <span>{payment.method}</span>
+                      </div>
+                    </td>
+                    <td className="col-date">
+                      <div className="payments-table-cell">
+                        {formatDate(payment.paidAt)}
+                      </div>
+                    </td>
+                    <td className="col-actions">
+                      <div className="payment-actions">
+                        <button 
+                          className="action-btn view"
+                          onClick={() => handleViewPayment(payment)}
+                          title="View payment details"
+                        >
+                          <Eye className="action-icon" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="payments-page">
+      <div className="payments-content">
+        <div className="section-summary">
+          <p className="section-description">Review all recorded payments and filter by method or date.</p>
+        </div>
+
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
+        {renderStats()}
+
+        {renderFilters()}
+
+        {renderTable()}
       </div>
 
       {/* Payment Details Modal */}

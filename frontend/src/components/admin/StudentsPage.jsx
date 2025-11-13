@@ -158,7 +158,7 @@ useEffect(() => {
   const filteredStudents = studentsWithStatus.filter(student => {
     const matchesSearch =
       student.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.primaryCourse?.courseName?.toLowerCase().includes(searchTerm.toLowerCase())
     
@@ -187,18 +187,8 @@ useEffect(() => {
     <div className="students-page">
       {/* Header */}
       <div className="students-header">
-        <div className="students-title-section">
-          {onBack && (
-            <button 
-              className="back-button"
-              onClick={onBack}
-              title="Back to Dashboard"
-            >
-              Back to Dashboard
-            </button>
-          )}
-          <h2 className="students-title">Students</h2>
-          <p className="students-subtitle">Manage student records and fee information</p>
+        <div className="students-summary">
+          <p className="students-description">Manage student records and fee information</p>
         </div>
         <div className="students-actions">
           <button 
@@ -225,9 +215,8 @@ useEffect(() => {
       )}
 
       {/* Filters */}
-      <div className="filters-card">
-        <div className="filters-content">
-          <div className="search-section">
+      <div className="students-filter-card">
+        <div className="students-filter-row">
             <div className="search-input-container">
               <Search className="search-icon" />
               <input
@@ -238,8 +227,6 @@ useEffect(() => {
                 className="search-input"
               />
             </div>
-          </div>
-          <div className="filter-controls">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -250,11 +237,6 @@ useEffect(() => {
               <option value="PARTIAL">Partial</option>
               <option value="PAID">Paid</option>
             </select>
-            <button className="filter-button">
-              <Filter className="w-4 h-4" />
-              More Filters
-            </button>
-          </div>
         </div>
       </div>
 
@@ -334,23 +316,13 @@ useEffect(() => {
                       {renderStatusBadge(student)}
                     </td>
                     <td>
-                      <div className="action-buttons">
+                      <div className="student-actions">
                         <button 
                           className="action-btn view"
                           onClick={() => handleViewPayments(student.id)}
-                          title="View Payments"
+                          title="View student details"
                         >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button 
-                          className="action-btn assign"
-                          onClick={() => {
-                            setAssigningStudent(student)
-                            setShowAssignmentModal(true)
-                          }}
-                          title="Assign Fee"
-                        >
-                          <CreditCard className="w-4 h-4" />
+                          <Eye className="action-icon" />
                         </button>
                         <button 
                           className="action-btn edit"
@@ -358,16 +330,16 @@ useEffect(() => {
                             setEditingStudent(student)
                             setShowModal(true)
                           }}
-                          title="Edit Student"
+                          title="Edit student"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="action-icon" />
                         </button>
                         <button 
                           className="action-btn delete"
                           onClick={() => handleDeleteStudent(student.id)}
-                          title="Delete Student"
+                          title="Delete student"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="action-icon" />
                         </button>
                       </div>
                     </td>

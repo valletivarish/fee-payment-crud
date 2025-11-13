@@ -99,20 +99,10 @@ const FeePlansPage = ({ onBack }) => {
 
   return (
     <div className="fee-plans-page">
-      {/* Header */}
-      <div className="fee-plans-header">
-        <div className="fee-plans-title-section">
-          {onBack && (
-            <button 
-              className="back-button"
-              onClick={onBack}
-              title="Back to Dashboard"
-            >
-              Back to Dashboard
-            </button>
-          )}
-          <h2 className="fee-plans-title">Fee Plans</h2>
-          <p className="fee-plans-subtitle">Manage fee structures for different courses and academic years</p>
+      <div className="fee-plans-summary-card">
+        <div className="fee-plans-summary">
+          
+          <p className="section-description">Manage and review fee plan structures by course and academic year.</p>
         </div>
         <div className="fee-plans-actions">
           <button 
@@ -132,7 +122,7 @@ const FeePlansPage = ({ onBack }) => {
       )}
 
       {/* Filters */}
-      <div className="filters-card">
+      <div className="fee-plans-filters-card">
         <div className="filters-content">
           <div className="search-section">
             <div className="search-input-container">
@@ -192,59 +182,45 @@ const FeePlansPage = ({ onBack }) => {
             className="fee-plan-card"
           >
             <div className="fee-plan-card-content">
-              <div className="fee-plan-header">
-                <div className="fee-plan-info">
-                  <div className="fee-plan-title-section">
-                    <h3 className="fee-plan-title">
-                      {plan.course}
-                    </h3>
+              <div className="fee-plan-top">
+                <div className="fee-plan-heading">
+                  <h3 className="fee-plan-title">{plan.course}</h3>
                     <div className="fee-plan-year">
                       <Calendar className="w-4 h-4" />
-                      {plan.academicYear}
-                    </div>
+                    <span>{plan.academicYear}</span>
                   </div>
-                  <div className="fee-plan-total">
-                    <div className="fee-plan-total-amount">
-                      {formatCurrency(plan.total)}
-                    </div>
-                    <div className="fee-plan-total-label">Total Fee</div>
-                  </div>
+                </div>
+                <div className="fee-plan-total">
+                  <span className="fee-plan-total-amount">{formatCurrency(plan.total)}</span>
+                  <span className="fee-plan-total-label">Total Fee</span>
+                </div>
+                <div className="fee-plan-top-placeholder" aria-hidden="true"></div>
+              </div>
+
+              <div className="fee-plan-breakdown">
+                <div className="fee-plan-breakdown-item">
+                  <span className="fee-plan-breakdown-label">Tuition</span>
+                  <span className="fee-plan-breakdown-amount">{formatCurrency(plan.tuition)}</span>
+                </div>
+                <div className="fee-plan-breakdown-item">
+                  <span className="fee-plan-breakdown-label">Hostel</span>
+                  <span className="fee-plan-breakdown-amount">{formatCurrency(plan.hostel)}</span>
+                </div>
+                <div className="fee-plan-breakdown-item">
+                  <span className="fee-plan-breakdown-label">Library</span>
+                  <span className="fee-plan-breakdown-amount">{formatCurrency(plan.library)}</span>
+                </div>
+                <div className="fee-plan-breakdown-item">
+                  <span className="fee-plan-breakdown-label">Lab</span>
+                  <span className="fee-plan-breakdown-amount">{formatCurrency(plan.lab)}</span>
+                </div>
+                <div className="fee-plan-breakdown-item">
+                  <span className="fee-plan-breakdown-label">Sports</span>
+                  <span className="fee-plan-breakdown-amount">{formatCurrency(plan.sports)}</span>
                 </div>
               </div>
 
-              <div className="fee-breakdown">
-                <div className="fee-item">
-                  <div className="fee-item-label">Tuition</div>
-                  <div className="fee-item-amount">
-                    {formatCurrency(plan.tuition)}
-                  </div>
-                </div>
-                <div className="fee-item">
-                  <div className="fee-item-label">Hostel</div>
-                  <div className="fee-item-amount">
-                    {formatCurrency(plan.hostel)}
-                  </div>
-                </div>
-                <div className="fee-item">
-                  <div className="fee-item-label">Library</div>
-                  <div className="fee-item-amount">
-                    {formatCurrency(plan.library)}
-                  </div>
-                </div>
-                <div className="fee-item">
-                  <div className="fee-item-label">Lab</div>
-                  <div className="fee-item-amount">
-                    {formatCurrency(plan.lab)}
-                  </div>
-                </div>
-                <div className="fee-item">
-                  <div className="fee-item-label">Sports</div>
-                  <div className="fee-item-amount">
-                    {formatCurrency(plan.sports)}
-                  </div>
-                </div>
-              </div>
-
+              <div className="fee-plan-footer">
               <div className="fee-plan-actions">
                 <button 
                   className="action-btn view"
@@ -270,6 +246,7 @@ const FeePlansPage = ({ onBack }) => {
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
+                </div>
               </div>
             </div>
           </motion.div>

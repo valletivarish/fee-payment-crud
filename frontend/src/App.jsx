@@ -2,8 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
 import './App.css';
 import LandingPage from './components/LandingPage';
-import AdminDashboard from './components/AdminDashboard';
-import StudentDashboard from './components/StudentDashboard';
+import AdminDashboard, {
+  DashboardOverviewScreen,
+  StudentsPageScreen,
+  FeePlansPageScreen,
+  AssignmentsPageScreen,
+  PaymentsPageScreen,
+} from './components/AdminDashboard';
+import StudentDashboard, { StudentOverviewScreen, StudentFeesScreen, StudentPaymentsScreen } from './components/StudentDashboard';
 import axios from 'axios';
 import { API_BASE_URL } from './config';
 import RoleLoginPage from './components/RoleLoginPage';
@@ -41,7 +47,7 @@ function StudentSelection() {
     navigate(`/student/${student.id}`);
   };
 
-  const handleBackToHome = () => {
+  const handleLogout = () => {
     navigate('/');
   };
 
@@ -84,10 +90,10 @@ function StudentSelection() {
         
         <div className="back-button-container">
           <button
-            onClick={handleBackToHome}
+            onClick={handleLogout}
             className="back-button"
           >
-            Back to Home
+            Logout
           </button>
         </div>
       </div>
@@ -95,8 +101,8 @@ function StudentSelection() {
   );
 }
 
-// Student Dashboard with ID from URL
-function StudentDashboardWithId() {
+// Student Dashboard layout wrapper
+function StudentLayoutWrapper() {
   const { studentId } = useParams();
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -119,7 +125,7 @@ function StudentDashboardWithId() {
     }
   };
 
-  const handleBackToHome = () => {
+  const handleLogout = () => {
     navigate('/');
   };
 
@@ -136,8 +142,8 @@ function StudentDashboardWithId() {
     return (
       <div className="error-container">
         <div className="error-message">{error}</div>
-        <button onClick={handleBackToHome} className="back-button">
-          Back to Home
+        <button onClick={handleLogout} className="back-button">
+          Logout
         </button>
       </div>
     );
@@ -147,25 +153,25 @@ function StudentDashboardWithId() {
     return (
       <div className="error-container">
         <div className="error-message">Student not found</div>
-        <button onClick={handleBackToHome} className="back-button">
-          Back to Home
+        <button onClick={handleLogout} className="back-button">
+          Logout
         </button>
       </div>
     );
   }
 
-  return <StudentDashboard student={student} onBack={handleBackToHome} />;
+  return <StudentDashboard student={student} onBack={handleLogout} />;
 }
 
-// Admin Dashboard with navigation
-function AdminDashboardWithNavigation() {
+// Admin Dashboard layout wrapper
+function AdminLayoutWrapper() {
   const navigate = useNavigate();
 
-  const handleBackToHome = () => {
+  const handleLogout = () => {
     navigate('/');
   };
 
-  return <AdminDashboard onBack={handleBackToHome} />;
+  return <AdminDashboard onBack={handleLogout} />;
 }
 
 function App() {
@@ -184,10 +190,20 @@ function App() {
         
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/admin" element={<AdminDashboardWithNavigation />} />
-        <Route path="/login/:role" element={<RoleLoginPage />} />
+          <Route path="/admin" element={<AdminLayoutWrapper />}>
+            <Route index element={<DashboardOverviewScreen />} />
+            <Route path="students" element={<StudentsPageScreen />} />
+            <Route path="fee-plans" element={<FeePlansPageScreen />} />
+            <Route path="due-payments" element={<AssignmentsPageScreen />} />
+            <Route path="payments" element={<PaymentsPageScreen />} />
+          </Route>
+          <Route path="/student/:studentId" element={<StudentLayoutWrapper />}>
+            <Route index element={<StudentOverviewScreen />} />
+            <Route path="fees" element={<StudentFeesScreen />} />
+            <Route path="payments" element={<StudentPaymentsScreen />} />
+          </Route>
+          <Route path="/login/:role" element={<RoleLoginPage />} />
           <Route path="/student-selection" element={<StudentSelection />} />
-          <Route path="/student/:studentId" element={<StudentDashboardWithId />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

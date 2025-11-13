@@ -137,7 +137,7 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
     e.preventDefault()
     
     setSubmissionError('')
-
+    
     if (!validateForm()) {
       return
     }
@@ -165,7 +165,7 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
       }
 
       matchedCourse = matchedCourse || studentCourses[0]
-
+      
       const assignmentData = {
         ...formData,
         studentName: selectedStudent?.firstName + ' ' + selectedStudent?.lastName,
@@ -278,9 +278,9 @@ const AssignmentModal = ({ assignment, onClose, onSave }) => {
                         ? `${primary.courseName} (${primary.startYear}-${primary.endYear})`
                         : 'No course'
                       return (
-                        <option key={student.id} value={student.id}>
+                      <option key={student.id} value={student.id}>
                           {student.firstName} {student.lastName} - {courseLabel}
-                        </option>
+                      </option>
                       )
                     })}
                   </select>

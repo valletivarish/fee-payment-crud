@@ -20,12 +20,9 @@ const StudentPaymentsModal = ({ studentId, studentName, onClose }) => {
   const fetchStudentPayments = async () => {
     try {
       setLoading(true)
-      // For now, we'll fetch all payments and filter by studentId
-      // In a real implementation, there would be a specific endpoint for student payments
       const response = await paymentAPI.getAll()
-      // Filter payments by studentId (this would need to be implemented in the backend)
-      const studentPayments = response.data.filter(payment => 
-        payment.studentFeeId && payment.studentFeeId.includes(studentId)
+      const studentPayments = (response.data || []).filter(
+        (payment) => payment.studentId === studentId
       )
       setPayments(studentPayments)
     } catch (err) {
